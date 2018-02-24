@@ -1,0 +1,27 @@
+VCF files were modified to list variants in one column. See folder
+variants-onecol/
+
+ALL VCF files are now in the folder VCFs.
+The endings mean the following:
+-indels.vcf file has only indels
+
+-beagle file was phased by beagle
+-np file was not phased
+-rand file was randomly phased
+
+-qual file has low quality variants filtered out (<800 quality removed)
+
+Go to following folders to run analyses
+indels-maxmin/
+indels-bottleneck/
+
+Deprecated folders (now hidden with initial '.'):
+indels-phased/
+indels/
+indels1/
+find-primers/
+
+The folder find-primers/ was the initial attempt at making windows
+which allow for primers at start and stop. This has been improved
+and refined to the folder indels-bottleneck/.
+

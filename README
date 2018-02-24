@@ -1,0 +1,17 @@
+VCF files were modified to list variants in one column.
+Use the script make_one_var_col.py to accomplish this.
+Documentation of its use is given in the script itself. 
+
+ALL VCF files are now in the folder VCFs.
+The endings mean the following:
+-indels.vcf file has only indels
+-beagle file was phased by beagle
+-np file was not phased
+-rand file was randomly phased
+-qual file has low quality variants filtered out (<800 quality removed)
+
+Go to the following folders to run analyses
+indels-maxmin/
+indels-bottleneck/
+
+
