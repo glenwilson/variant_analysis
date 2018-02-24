@@ -1,0 +1,29 @@
+#!/usr/bin/python
+
+import sys
+import csv
+
+#command line arguments the vcf files to be filtered
+inputlist= sys.argv
+inputlist.pop(0)
+
+suffix = 'indels.vcf'
+
+for filename in inputlist:
+    vcf = open(filename, 'r')
+    vcfcsv = csv.reader(vcf, delimiter='\t', quotechar=None, doublequote=False)
+    out = open(filename[:-4]+suffix, 'w')
+    outcsv = csv.writer(out, delimiter='\t', quotechar=None, doublequote=False)
+    for entry in vcfcsv:
+        if len(entry) < 2 or entry[0][0] == "#":
+            outcsv.writerow(entry)
+        elif ',' not in entry[4]:
+            if len(entry[3]) - len(entry[4]) != 0:
+                outcsv.writerow(entry)
+        elif ',' in entry[4]:
+            a = entry[4].split(',')
+            if len(entry[3])- a[0] != 0 or len(entry[3]) - a[1] != 0:
+                outcsv.writerow(entry)
+    vcf.close()
+out.close()
+

@@ -1,0 +1,136 @@
+import csv
+
+win = open('windows_with_primers-qual-rand.csv', 'r')
+wincsv = csv.reader(win, delimiter='\t', quotechar=None, doublequote=False)
+winlist = []
+for row in wincsv:
+    winlist.append(row)
+win.close()
+   
+#this removes the header, but saves it with name header
+header = winlist.pop(0)
+
+#Open file to write to, will make rows for csv file
+out = open('ordered_windows-bottleneck-qual-rand4.csv', 'w')
+outcsv = csv.writer(out, delimiter='\t', quotechar=None)
+
+outlist = [row for row in winlist]
+#this adds to each row the matrix of minimal Linfinity distances of
+#bands.
+#
+#What this means is that for variant A and variant B, draw the lengths
+#of the windows for each homolog on a number line. This is effectively
+#what one would see as bands in a gel in the experiment. We now need
+#to measure how different the bands are from one another.
+
+#This is accomplished as follows. Pair up the homologs of A with the
+#homologs of B. Here are the pairs: (A1, B1), (A1, B2), (A2, B1), (A2,
+#B2). The difference in length of one of these pairs will be smallest.
+#For sake of argument say it is (A1, B1). If this is very small,
+#the PCR experiment would not be able to distinguish the band A1 from
+#the band B1. Now we still have another pair of bands A2 and B2. We
+#then calculate the distance of this pair. If this is large, we can
+#distinguish A from B. If not, then A and B have bands which are too
+#similar to distinguish. 
+
+offset = 6
+#this is the resolution used in calling distinguishing or not
+resn = 4
+
+for row in outlist:
+    distlist = []
+    for q in range(0,9):
+        r = q+1
+        while r < 9:
+            #this is Linfty or bottleneck distance
+            #first ordering
+            first = max(abs(int(row[2*q+offset]) - int(row[2*r+offset])),
+                        abs(int(row[2*q+offset + 1]) - int(row[2*r+offset + 1])))
+            #second ordering
+            second = max(abs(int(row[2*q+offset]) - int(row[2*r+offset + 1])),
+                         abs(int(row[2*q+offset + 1]) - int(row[2*r+offset])))
+            distlist.append(min(first, second))
+
+            # #this is L0
+            # #first ordering
+            # first = (abs(int(row[2*q+offset]) - int(row[2*r+offset])) +
+            #          abs(int(row[2*q+offset + 1]) - int(row[2*r+offset + 1])))
+            # #second ordering
+            # second = (abs(int(row[2*q+offset]) - int(row[2*r+offset + 1])) +
+            #           abs(int(row[2*q+offset + 1]) - int(row[2*r+offset])))
+            # distlist.append(min(first, second))
+
+            # #This is described value
+            # pair1 = min(abs(int(row[2*q+offset]) - int(row[2*r+offset])),
+            #             abs(int(row[2*q+offset + 1]) - int(row[2*r+offset + 1])))
+            # pair2 = min(abs(int(row[2*q+offset]) - int(row[2*r+offset + 1])),
+            #             abs(int(row[2*q+offset + 1]) - int(row[2*r+offset])))
+            # if pair1 < pair2:
+            #     distlist.append(max(abs(int(row[2*q+offset]) -
+            #                             int(row[2*r+offset])),
+            #                         abs(int(row[2*q+offset + 1]) -
+            #                             int(row[2*r+offset + 1]))))
+            # elif pair2 < pair1:
+            #     distlist.append(max(abs(int(row[2*q+offset]) -
+            #                             int(row[2*r+offset + 1])),
+            #                         abs(int(row[2*q+offset + 1]) -
+            #                             int(row[2*r+offset]))))
+            # else:
+            #     distlist.append(min(max(abs(int(row[2*q+offset]) -
+            #                                 int(row[2*r+offset])),
+            #                             abs(int(row[2*q+offset + 1]) -
+            #                                 int(row[2*r+offset + 1]))),
+            #                         max(abs(int(row[2*q+offset]) -
+            #                                 int(row[2*r+offset + 1])),
+            #                             abs(int(row[2*q+offset + 1]) -
+            #                                 int(row[2*r+offset]))) ))
+            r += 1
+    row.extend(distlist)
+
+#this adds a column which says how many pairs of variants
+#can be distinguished for a given gene. The threshold for
+#distinguishing variants is 5bp
+for row in outlist:
+    matrix = row[24:60]
+    score = 0
+    for entry in matrix:
+        if entry > resn:
+            score += 1
+    row.append(score)
+
+#this adds a column which is roughly the L0 distance of the
+#pairwise bottleneck distance vector
+for row in outlist:
+    matrix = row[24:60]
+    score = 0
+    for entry in matrix:
+        if entry > resn:
+            score += float(entry)/resn
+    row.append(score)
+
+    
+#this sorts the genes by how many pairs of variants can be distinguished
+
+outlist = sorted(outlist, key=lambda row: int(row[61]), reverse=True)
+outlist = sorted(outlist, key=lambda row: int(row[60]), reverse=True)
+
+
+#this makes the header
+for q in range(9):
+    r = q + 1
+    while r < 9:
+        header.append("["+str(header[2*q+offset])[:-8] + ", " +
+                      str(header[2*r+offset])[:-8] + "]")
+        r += 1
+header.append("# distinguished pairs")        
+header.append("L0 score")
+
+#print header[59]
+
+#this writes the rows to outcsv.
+outcsv.writerow(header)
+for row in outlist:
+    outcsv.writerow(row)
+
+out.close()
+

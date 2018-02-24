@@ -1,0 +1,71 @@
+
+1) First make a csv of nblrr windows. 
+
+Run bed_to_csv.py to get a csv of the nblrr windows.
+
+This command takes no arguments, but you may need to change file names in the program.
+
+Input filename: Sp9509v3.5_nblrr-noscaffold.bed
+
+Output is nblrr-noscaffold-windows.csv
+
+2) Now identify the conserved regions of your nblrr windows with get_conserved_windows.
+
+YOU NEED TO RUN THIS ON VCF FILES WITH INDELS AND SNPS. It should be
+in one column format. See directory .../variants_onecol/ for these vcf
+files.
+
+command line arguments: ????_v_Spolyrhiza9509_20150416.all.passonecol.vcf
+
+input file: nblrr-noscaffold-windows.csv
+
+output file: conserved_regions-nblrr.csv
+
+2.5) Run make_new_windows to take information about conserved regions
+and give windows of appropriate size. 
+
+input: conserved_regions-nblrr.csv
+
+output: primer3-windows.csv
+
+3) Now produce primer3_core files
+
+run make_primer3_files
+
+input: primer3-windows.csv
+       Spolyrhiza9509_20150416.fasta
+output: primer3-files.txt
+
+4) Run primer3_core
+
+primer3_core primer3-files.txt > primer3-files.out
+
+input: primer3-files.txt
+output: primer3-files.out
+
+5) make windows from primer3_core output
+
+run primer3out_to_windows.py
+
+input: primer3-files.out
+
+output: windows_with_primers.csv
+
+6) calculate something about the windows, like max-min scores. run the program
+
+./calculate_maxmin
+
+command line arguments: ????_phased.gt-indels.vcf
+(the phasing is irrelevant here. just want vcf with only indels) 
+
+input: windows_with_primers.csv
+
+output: wins_primers-maxmin.csv
+
+7) order the windows by running 
+matrix_order_good_windows.py
+
+input: wins_primers-maxmin.csv
+
+output: wins_ordered_primers.csv
+

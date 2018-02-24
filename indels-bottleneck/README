@@ -1,0 +1,59 @@
+This folder contains commands to produce input files for the 
+primer3_core program and commands to identify good regions to 
+use for PCR with highly variable length.
+
+1) get_conserved_windows.py 
+This takes ordered nblrr data in csv format as input, extracts some number of
+good nblrr genes, and produces a new csv file which gives windows of conserved
+regions in the nblrr gene. Each row is a nblrr gene, and the entries in the row
+are tuples (start, len) with the start position of the conserved region and the
+length of the conserved region. 
+
+command line args: phased vcf files with SNPs and INDELs
+*all.passonecol.vcf
+
+input: nblrr-noscaffold-windows.csv
+output: conserved_regions-nblrr.csv
+
+2) This will open up conserved_regions-nblrr.csv and produce a csv of
+windows to be analyzed.
+
+run: make_new_windows.py
+input: conserved_regions-nblrr.csv
+output: primer3-windows.csv
+
+3) make_primer3_files.py 
+input: primer3-windows.csv
+input: Spolyrhiza9509_20150416.fasta
+output: primer3-files.txt
+
+3.5) run primer3_core on the output of previous command
+
+primer3_core primer3-files.txt > primer3-files.out
+
+input: primer3-files.txt
+output: primer3-files.out
+
+4) turn primer3 output into windows 
+
+run: primer3out_to_windows.py
+
+input: primer3-files.out
+output: windows_with_primers.csv 
+
+5) Now calculate lengths of the windows from windows_with_primers.csv 
+for each of the variants given as command line arguments.
+
+run: nblrr_var_windows.py
+command line args: vcf files for variants with only indels, choose from folder ../VCFs
+input: windows_with_primers.csv
+output: windows_with_primers-?.csv
+where ? is np, beagle, rand, qual-np, qual-beagle, qual-rand. Must specify in program file.
+
+6) Now order windows using bottleneck distance, L0 score, and number
+of distinguished pairs.
+
+run: matrix_order_good_windows.py
+input: windows_with_primers-lengths.csv
+output: ordered_windows-bottleneck-?.csv 
+where ? is np, beagle, rand, qual-np, qual-beagle, qual-rand. Must specify in program file.

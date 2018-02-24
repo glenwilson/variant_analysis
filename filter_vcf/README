@@ -1,0 +1,16 @@
+This folder contains scripts to filter, randomly phase, and extract
+INDELS from VCF files with only one variant column.
+
+1) Run the program random_phasing.py as
+
+./random_phasing.py my_file.vcf
+
+or with a wildcard
+
+./random_phasing.py *.vcf
+
+2) This folder also includes a program to extract just indels from a
+VCF file. One way to run it on the randomly phased VCF files is as
+follows. 
+
+./indels_filter.py *-rand.vcf

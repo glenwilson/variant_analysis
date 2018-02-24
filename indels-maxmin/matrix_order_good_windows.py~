@@ -1,0 +1,163 @@
+import csv
+
+def prob_dist(int1, int2, n):
+    #int1 is a pair or list [a1, b1] of integers
+    #int2 is a pair or list [a2, b2] of integers
+    #n is the resolution
+    #we calculate the probability that randomly
+    #chosen numbers from int1 and int2 are at least 
+    #distance n apart.
+    a1 = int1[0]
+    a2 = int2[0]
+    b1 = int1[1]
+    b2 = int2[1]
+
+    if b1 - a1 == 0 and b2 - a2 ==0:
+        if abs(b1-b2) >= n:
+            return 1
+        else:
+            return 0
+    
+    if b1 - a1 == 0:
+        tot = b2 - a2
+        if b1 <= a2 - n:
+            return 1   
+        elif a2 - n< b1 < b2 + n:
+            return (tot-float(min(b1+n,b2)-max(b1-n,a2)))/tot
+        elif b2 + n<= b1:
+            return 1
+            
+    if b2 - a2 == 0:
+        tot = b1 - a1
+        if b2 <= a1 - n:
+            return 1   
+        elif a1 - n< b2 < b1 + n:
+            return (tot-float(min(b2+n,b1)-max(b2-n,a1)))/tot
+        elif b1 + n<= b2:
+            return 1
+
+    if b2 >= b1+n:
+        top = 0
+    if a1-n >= b2:
+        top = 2*n*(b1-a1)
+    if a1 + n <= b1 - n:
+        if (b1 + n >= b2 >= b1 - n):
+            top = float((b1+n-b2)**2)/2
+        elif b1 - n > b2 >= a1 + n:
+            top = 2*n**2 + 2*n*(b1 -n - b2)
+        elif a1+n > b2 >= a1 - n:
+            top = 2*n*(b1 - a1) - float((b2 - a1 + n)**2)/2
+    if b1 - n <= a1 + n:
+        if b1 + n >= b2 >= a1+n:
+            top = float((b1+n-b2)**2)/2
+        elif a1 + n > b2 >= b1 - n:
+            top = float((b1-a1)**2)/2 + (b1-a1)*(a1+n-b2)
+        elif b1-n > b2 >= a1-n:
+            top = 2*n*(b1 -a1 ) - float((b2-a1+n)**2)/2
+        #now calculate effect of location of a2.
+    if a2 <= a1 -n:
+        bot = 0
+    if a2 >= b1 + n:
+        bot = 2*n*(b1-a1)
+    if a1 + n <= b1 -n:
+        if a1 - n <= a2 <= a1 +n :
+            bot = float((a2 - a1 + n)**2)/2
+        elif a1 +n < a2 <= b1 - n:
+            bot = 2*n**2 + 2*n*(a2 - a1 - n)
+        elif b1 - n < a2 <= b1 + n:
+            bot = 2*n*(b1 - a1) - float((b1 + n - a2)**2)/2
+    if b1 - n <= a1 + n:
+        if a1 - n <= a2 <= b1-n:
+            bot = float((a2 - a1 +n)**2)/2
+        elif b1 - n < a2 <= a1 + n:
+            bot = float((b1-a1)**2)/2 + (b1-a1)*(a2-b1+n)
+        elif a1 + n < a2 <= b1 + n:
+            bot = 2*n*(b1 - a1) - float((b1 + n - a2)**2)/2
+
+    tot = (b1 - a1)*(b2 - a2)
+
+    if float(tot - (b1 -a1)*2*n + top + bot)/tot < 0:
+        print int1
+        print int2
+        print str(tot) + " " + str(top) + " " + str(bot) +" " + str((b1-a1)*2*n) + " " + str(float(tot - (b1 -a1)*2*n + top + bot)/tot)
+    return float(tot - (b1 -a1)*2*n + top + bot)/tot
+
+
+win = open('wins_primers-maxmin-qual-np.csv', 'r')
+wincsv = csv.reader(win, delimiter='\t', quotechar=None, doublequote=False)
+winlist = []
+for row in wincsv:
+    winlist.append(row)
+win.close()
+   
+#this removes the header, but saves it with name header
+header = winlist.pop(0)
+
+#Open file to write to, will make rows for csv file
+out = open('ordered_windows-maxmin-qual-np.csv', 'w')
+outcsv = csv.writer(out, delimiter='\t', quotechar=None)
+
+outlist = [row for row in winlist]
+
+offset = 6
+#this is the resolution used in calling distinguishing or not
+resn = 5
+
+for row in outlist:
+    distlist = []
+    for q in range(0,9):
+        r = q+1
+        while r < 9:
+            int1 = [int(row[2*q+offset]), int(row[2*q+offset+1])]
+            int2 = [int(row[2*r+offset]), int(row[2*r+offset+1])]
+            distlist.append(prob_dist(int1, int2, resn))
+            r += 1
+    row.extend(distlist)
+
+#this adds a column which says how many pairs of variants
+#can be distinguished for a given gene. The threshold for
+#distinguishing variants is 5bp
+for row in outlist:
+    matrix = row[24:60]
+    score = 0
+    for entry in matrix:
+        if entry > .7:
+            score += 1
+    row.append(score)
+
+#this adds a column which is roughly the L0 distance of the
+#pairwise bottleneck distance vector
+for row in outlist:
+    matrix = row[24:60]
+    score = 0
+    for entry in matrix:
+        score += float(entry)
+    score = score/36
+    row.append(score)
+
+    
+#this sorts the genes by how many pairs of variants can be distinguished
+
+outlist = sorted(outlist, key=lambda row: int(row[61]), reverse=True)
+outlist = sorted(outlist, key=lambda row: int(row[60]), reverse=True)
+
+
+#this makes the header
+for q in range(9):
+    r = q + 1
+    while r < 9:
+        header.append("["+str(header[2*q+offset])[:-8] + ", " +
+                      str(header[2*r+offset])[:-8] + "]")
+        r += 1
+header.append("# distinguished pairs")        
+header.append("L0 score")
+
+#print header[59]
+
+#this writes the rows to outcsv.
+outcsv.writerow(header)
+for row in outlist:
+    outcsv.writerow(row)
+
+out.close()
+
