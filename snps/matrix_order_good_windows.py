@@ -1,6 +1,6 @@
 import csv
 
-win = open('windows_with_primers-lengths.csv', 'r')
+win = open('windows_with_primers-snps.csv', 'r')
 wincsv = csv.reader(win, delimiter='\t', quotechar=None, doublequote=False)
 winlist = []
 for row in wincsv:
@@ -11,7 +11,7 @@ win.close()
 header = winlist.pop(0)
 
 #Open file to write to, will make rows for csv file
-out = open('matrix_order_primers-bottleneck.csv', 'w')
+out = open('matrix_order_nblrr_primers-snps.csv', 'w')
 outcsv = csv.writer(out, delimiter='\t', quotechar=None)
 
 outlist = [row for row in winlist]
